@@ -3,130 +3,178 @@ import os
 import random
 import math
 
-pygame.font.init()
+pygame.font.init() # carga los fondos de escritura
 
-WIDTH, HEIGHT = 500,700
-WINDOW = pygame.display.set_mode((WIDTH,HEIGHT))
+WIDTH, HEIGHT = 500,700 # dimensiones de la ventana del juego
+WINDOW = pygame.display.set_mode((WIDTH,HEIGHT)) # Objeto de la ventana
 
-FPS = 60
+FPS = 60 # fps del juego
 
-WHITE = (255,255,255)
+# WHITE = (255,255,255) # definicion del color blanco
 
-CAR_WIDTH, CAR_HEIGHT = 50,100
-TRUCK_WIDTH, TRUCK_HEIGHT = 50,200
+CAR_WIDTH, CAR_HEIGHT = 50,100 # dimensiones de los carros
+# TRUCK_WIDTH, TRUCK_HEIGHT = 50,200 # dimensiones de los camiones
 
-VEL = 8
-VEL_VEHICLES = 3
-VEL_BACKGROUND = VEL_VEHICLES*7
-VEL_VEHICLE_GENERATION = 80 # less is faster
+VEL = 8 # velocidad del carro
+VEL_VEHICLES = 3 # velocidad de los vehiculos (obstaculos)
+VEL_BACKGROUND = VEL_VEHICLES*7 # velocidad del fondo
+VEL_VEHICLE_GENERATION = 80 # entre menor sea mas rapido es la generacion
 
-IS_CAR = True
+# IS_CAR = True # verifica que el objeto sea un carro
 
-YOU_LOSE = pygame.image.load(os.path.join('assets','YOU_LOSE.jpg'))
-YOU_LOSE = pygame.transform.scale(YOU_LOSE,(WIDTH,HEIGHT))
+YOU_LOSE = pygame.image.load(os.path.join('assets','YOU_LOSE.jpg')) # carga la imagen que se mostrara cuando el jugador pierde
+YOU_LOSE = pygame.transform.scale(YOU_LOSE,(WIDTH,HEIGHT)) # escala la imagen al tamaño de la ventana
 
-WHITE_CAR = pygame.image.load(os.path.join('assets','white_car.png'))
-WHITE_CAR = pygame.transform.scale(WHITE_CAR,(CAR_WIDTH,CAR_HEIGHT))
+WHITE_CAR = pygame.image.load(os.path.join('assets','white_car.png')) # carga la imagen del carro blaco
+WHITE_CAR = pygame.transform.scale(WHITE_CAR,(CAR_WIDTH,CAR_HEIGHT)) # escala el tañano de la imagen
 
-BACKGROUND = pygame.image.load(os.path.join('assets','road.jpg'))
-BACKGROUND_HEIGHT = BACKGROUND.get_height()
-BACKGROUND = pygame.transform.scale(BACKGROUND,(WIDTH,BACKGROUND_HEIGHT))
+BACKGROUND = pygame.image.load(os.path.join('assets','road.jpg')) # carga la imagen del fondo, es una carretera
+BACKGROUND_HEIGHT = BACKGROUND.get_height() # obtiene la altura del fondo
+BACKGROUND = pygame.transform.scale(BACKGROUND,(WIDTH,BACKGROUND_HEIGHT)) # escala la imagen para que el ancho sea del tamaño de la ventana
 
-# WHITE_TRUCK = pygame.image.load(os.path.join('assets','white_truck.png'))
-# WHITE_TRUCK = pygame.transform.scale(WHITE_TRUCK,(TRUCK_WIDTH,TRUCK_HEIGHT))
+# WHITE_TRUCK = pygame.image.load(os.path.join('assets','white_truck.png')) # carla la imagen de un camion blanco
+# WHITE_TRUCK = pygame.transform.scale(WHITE_TRUCK,(TRUCK_WIDTH,TRUCK_HEIGHT)) # escala la imagen de un camion blanco
 
-CAR = pygame.image.load(os.path.join('assets','car.png'))
-CAR = pygame.transform.scale(CAR,(CAR_WIDTH,CAR_HEIGHT))
+CAR = pygame.image.load(os.path.join('assets','car.png')) # carga la imagen del carro
+CAR = pygame.transform.scale(CAR,(CAR_WIDTH,CAR_HEIGHT)) # escala la imagen del carro
 
-HIT = pygame.USEREVENT + 1
-TILES = math.ceil(HEIGHT / BACKGROUND.get_height())
+HIT = pygame.USEREVENT + 1 # crea el evento que sera generado cuando halla una colision
+TILES = math.ceil(HEIGHT / BACKGROUND.get_height()) # calcula cuantas imagenes del fondo se deben usar para llenar la ventana
 
-vehicles = []
+vehicles = [] # guarda los objetos de los vehiculos
 
-pygame.display.set_caption("RUN RUN")
+pygame.display.set_caption("RUN RUN") # pone el nombre de la ventana creada (esta se muestra en la esquina superior izquierda)
 
 
 def draw_window(car, vehicles, lose, displacement):
 
+    """
+    funcion que dibuja los objetos que se mostraran en la ventana
+    parametros:
+    * car: carro del juegador
+    * vehicles: lista de vehiculos presentes en el juego
+    * lose: bandera que verifica si el jugador no ha perdido
+    * displacement: es el desplazamiento que lleva el fondo para generar la sensacion de movimiento de la carretera
+    retorno:
+    * retorna el desplazamiento actual del fondo
+    """
+    # verifica si el jugador perdio o no
     if not lose:
         # WINDOW.fill(WHITE)
+        # dibuja el fondo las veces necesarias para llenar la ventana
         for i in range(0,TILES+1):
-            WINDOW.blit(BACKGROUND, (0,-i*BACKGROUND_HEIGHT+displacement))
+            WINDOW.blit(BACKGROUND, (0,-i*BACKGROUND_HEIGHT+displacement)) 
 
-        displacement += VEL_BACKGROUND
+        displacement += VEL_BACKGROUND # genera el desplazamiento del fondo
+        #si el desplazamiento es mas grande el tamaño de cada imagen de la carretera entonces se estan dibujando carreteras fuera 
+        # de la ventana, entonces debe reiniciarse para no dibujar imagenes de carretera fuera de la ventaana
         if displacement >= BACKGROUND_HEIGHT:
-            displacement = 0
-
+            displacement = 0 
+        # dibuja los vehiculos
         for vehicle, type in vehicles:
-            WINDOW.blit(type, (vehicle.x,vehicle.y))
+            WINDOW.blit(type, (vehicle.x,vehicle.y)) 
 
-        WINDOW.blit(CAR,(car.x,car.y))
+        WINDOW.blit(CAR,(car.x,car.y)) # dibuja el carro del jugador
     else:
-        WINDOW.fill(WHITE)
-        WINDOW.blit(YOU_LOSE,(0,0))
+        # WINDOW.fill(WHITE)
+        WINDOW.blit(YOU_LOSE,(0,0)) # dibuja la imagen que se muestra cuando el jugador pierde
 
-    pygame.display.update()
+    pygame.display.update() # actualiza los dibujos
 
     return displacement
 
     
 def handle_vehicles(car, vehicles):
+    """
+    Funcion que se encarga de manejar las acciones de los vehiculos y como interactuan estos con el carro del jugador y la ventana
+    parametros:
+    * car: carro del jugador
+    * vehicles: vehiculos
+    retorno:
+    * retorna si hay colision o no
+    """
+
+    # itera por la lista de los vehiculos, extrayendo su objeto y tipo
     for vehicle, type in vehicles:
+        # verifica si existe una colision del carro del jugador con un vehiculo
         if car.colliderect(vehicle):
-            pygame.event.post(pygame.event.Event(HIT))
-            # vehicles.remove((vehicle,type))
+            pygame.event.post(pygame.event.Event(HIT)) # genera el evento HIT cuando hay una colision
             return True
         elif vehicle.y > HEIGHT:
             vehicles.remove((vehicle,type))
         vehicle.y += VEL_VEHICLES
     return False
 
-def random_car_generator(count):
-    count += 1
-    global VEL_VEHICLE_GENERATION
-    if count%VEL_VEHICLE_GENERATION == 0:
-        vehicles.append((pygame.Rect(random.randint(0,WIDTH-CAR_WIDTH),-CAR_HEIGHT,CAR_WIDTH,CAR_HEIGHT), WHITE_CAR))
-        return 0
-    return count
+def random_car_generator(frame_count):
+    """
+    Funcion que se encarga de generar los vehiculos en posiciones aleatorias
+    parametros:
+    * frame_count: lleva las cuentas de los frames desde que se creo el ultimo vehiculo
+    retorno:
+    * retorna la actualizacion de la variable frame_count
+    """
+    frame_count += 1 # actualiza la cantidad de frames que han pasado desde la ultima generacion
+    global VEL_VEHICLE_GENERATION # variavle global que maneja la velocidad con la que se generan los vehiculos
+    # si se alcanza la cantidad de frames definida en VEL_VEHICLE_GENERATION se genera un nuevo vehiculo
+    if frame_count == VEL_VEHICLE_GENERATION:
+        vehicles.append((pygame.Rect(random.randint(0,WIDTH-CAR_WIDTH),-CAR_HEIGHT,CAR_WIDTH,CAR_HEIGHT), WHITE_CAR)) # genera un
+                                                                                                                      # vehiculo aleatorio
+        return 0 # reinicia la cuenta de los frames
+    return frame_count # devuelve la cuenta de los frames
+
+def Is_window_close():
+    for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                return  False
+    return True
+
+def key_event(car):
+    keys_pressed = pygame.key.get_pressed()
+    if keys_pressed[pygame.K_a] and car.x > 0:
+        car.x -= VEL
+    if keys_pressed[pygame.K_d] and car.x+CAR_WIDTH < WIDTH:
+        car.x += VEL
 
 def main():
-    lose = False
-    run = True
-    displacement = 0
-    clock = pygame.time.Clock()
+    """
+    Funcion principal del juego
+    """
+    lose = False # bandera que guarda el jugador ha perdido
+    run = True # bandera que define si el juego debe seguir corriendo
+    displacement = 0 # desplazamiento del fondo para generar sensacion de movimiento de la carretera
+    clock = pygame.time.Clock() # creacion de objeto que maneja el tiempo
 
-    white_car = pygame.Rect(0,-CAR_HEIGHT,CAR_WIDTH,CAR_HEIGHT), WHITE_CAR
-    # white_truck = pygame.Rect(WIDTH//2,0,TRUCK_WIDTH,TRUCK_HEIGHT)
+    white_car = pygame.Rect(0,-CAR_HEIGHT,CAR_WIDTH,CAR_HEIGHT), WHITE_CAR # creacion de un carro blanco al inicio del juego
+    # white_truck = pygame.Rect(WIDTH//2,0,TRUCK_WIDTH,TRUCK_HEIGHT) # creacion de un camion blanco
 
-    vehicles.append(white_car)
-    # vehicles.append(white_truck)
+    vehicles.append(white_car) # se agrega el carro a la lista de vehiculos
+    # vehicles.append(white_truck) # agrega el camion a la lista de vehiculos
 
-    car = pygame.Rect(WIDTH//2+WIDTH//4,HEIGHT//2,CAR_WIDTH,CAR_HEIGHT)
+    car = pygame.Rect(WIDTH//2+WIDTH//4,HEIGHT//2,CAR_WIDTH,CAR_HEIGHT) # crea el rectangulo del carro del jugador
 
-    count = 0
+    frame_count = 0 # cuanta la cantidad de frames que han pasado desde el ultimo vehiculo creado
 
+    # bucle principal de juego
     while run:
-        clock.tick(FPS)
 
-        count = random_car_generator(count)
+        clock.tick(FPS)# define los fps del juego
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
+        # se generan obstaculos
+        frame_count = random_car_generator(frame_count)
 
+        # verifica si la ventana no se ha cerrado
+        run = Is_window_close()
+        
+        # si no ha perdido, el juego contiuna
         if not lose:
+            # manejo de los obstaculos, si hay una colision el jugador pierde
             lose = handle_vehicles(car, vehicles)
+            # dibuja todos los objetos en la ventana, de vuelve el desplazamiento actual de las imagenes de la carretera 
             displacement = draw_window(car, vehicles, lose, displacement)
-            
+            # verifica las entradas por teclado y define las acciones que se hacen con estas
+            key_event(car)
 
-            keys_pressed = pygame.key.get_pressed()
-            if keys_pressed[pygame.K_a] and car.x > 0:
-                car.x -= VEL
-            if keys_pressed[pygame.K_d] and car.x+CAR_WIDTH < WIDTH:
-                car.x += VEL
-        # print(len(vehicles))
-
-    pygame.quit()
+    pygame.quit() # cierra el juego
 
             
 if __name__ == "__main__":
