@@ -38,7 +38,7 @@ BACKGROUND = pygame.transform.scale(BACKGROUND,(WIDTH,BACKGROUND_HEIGHT)) # esca
 CAR = pygame.image.load(os.path.join('assets','car.png')) # carga la imagen del carro
 CAR = pygame.transform.scale(CAR,(CAR_WIDTH,CAR_HEIGHT)) # escala la imagen del carro
 
-HIT = pygame.USEREVENT + 1 # crea el evento que sera generado cuando halla una colision
+HIT = pygame.USEREVENT + 1 # crea el evento que sera generado cuando haya una colision
 TILES = math.ceil(HEIGHT / BACKGROUND.get_height()) # calcula cuantas imagenes del fondo se deben usar para llenar la ventana
 
 vehicles = [] # guarda los objetos de los vehiculos
