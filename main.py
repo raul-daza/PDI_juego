@@ -2,6 +2,8 @@ import pygame
 import os
 import random
 import math
+import pathlib
+import cv2
 
 pygame.font.init() # carga los fondos de escritura
 
@@ -44,6 +46,10 @@ TILES = math.ceil(HEIGHT / BACKGROUND.get_height()) # calcula cuantas imagenes d
 vehicles = [] # guarda los objetos de los vehiculos
 
 pygame.display.set_caption("RUN RUN") # pone el nombre de la ventana creada (esta se muestra en la esquina superior izquierda)
+
+cascade_path = pathlib.Path(cv2.__file__).parent.absolute() / "data/haarcascade_frontalface_default.xml" #Slecciona el archivo xml que reconoce caras.
+clf = cv2.CascadeClassifier(str(cascade_path)) #Se define el clasificador
+video_cap = cv2.VideoCapture(0) #La cama a utilizar es la camara por defecto.
 
 
 def draw_window(car, vehicles, lose, displacement):
@@ -134,6 +140,11 @@ def key_event(car):
         car.x -= VEL
     if keys_pressed[pygame.K_d] and car.x+CAR_WIDTH < WIDTH:
         car.x += VEL
+def car_movement(car,x):
+     if car.x + CAR_WIDTH < WIDTH and car.x > 0:
+        car.x = x
+    
+
 
 def main():
     """
@@ -150,9 +161,9 @@ def main():
     vehicles.append(white_car) # se agrega el carro a la lista de vehiculos
     # vehicles.append(white_truck) # agrega el camion a la lista de vehiculos
 
-    car = pygame.Rect(WIDTH//2+WIDTH//4,HEIGHT//2,CAR_WIDTH,CAR_HEIGHT) # crea el rectangulo del carro del jugador
+    car = pygame.Rect(3*WIDTH//4,HEIGHT//2,CAR_WIDTH,CAR_HEIGHT) # crea el rectangulo del carro del jugador
 
-    frame_count = 0 # cuanta la cantidad de frames que han pasado desde el ultimo vehiculo creado
+    frame_count = 0 # cuenta la cantidad de frames que han pasado desde el ultimo vehiculo creado
 
     # bucle principal de juego
     while run:
@@ -167,13 +178,38 @@ def main():
         
         # si no ha perdido, el juego contiuna
         if not lose:
+
+            ret, video_data = video_cap.read() #Leo de la camara.
+
+            # Flip the video horizontally
+            video_data = cv2.flip(video_data, 1)
+
+            gray = cv2.cvtColor(video_data,cv2.COLOR_BGR2GRAY) #Convierto la imagen a escala de grises
+            faces = clf.detectMultiScale(
+                gray,
+                scaleFactor=1.1,
+                minNeighbors=5,
+                minSize=(30,30),
+                flags=cv2.CASCADE_SCALE_IMAGE
+            )   #Se detectan las caras
+
             # manejo de los obstaculos, si hay una colision el jugador pierde
             lose = handle_vehicles(car, vehicles)
             # dibuja todos los objetos en la ventana, de vuelve el desplazamiento actual de las imagenes de la carretera 
             displacement = draw_window(car, vehicles, lose, displacement)
             # verifica las entradas por teclado y define las acciones que se hacen con estas
-            key_event(car)
+            #key_event(car)
+            for(x,y,width,height) in faces:
+                cv2.rectangle(video_data,(x,y),(x+width,y+height),(255,0,0),2)
+                car_movement(car,x)
+                print(x,y,width,height)
+            
+            cv2.imshow("video_live face detection",video_data)
 
+            # if cv2.waitKey(10) == ord("a"):
+            #     break
+    video_cap.release()
+    cv2.destroyAllWindows()
     pygame.quit() # cierra el juego
 
             
