@@ -21,6 +21,8 @@ VEL = 8 # velocidad del carro
 VEL_VEHICLES = 3 # velocidad de los vehiculos (obstaculos)
 VEL_BACKGROUND = VEL_VEHICLES*7 # velocidad del fondo
 VEL_VEHICLE_GENERATION = 80 # entre menor sea mas rapido es la generacion
+score = 0 #Variable que lleva el puntaje.
+font = pygame.font.Font('freesansbold.ttf',20)
 
 # IS_CAR = True # verifica que el objeto sea un carro
 
@@ -45,11 +47,11 @@ TILES = math.ceil(HEIGHT / BACKGROUND.get_height()) # calcula cuantas imagenes d
 
 vehicles = [] # guarda los objetos de los vehiculos
 
-pygame.display.set_caption("RUN RUN") # pone el nombre de la ventana creada (esta se muestra en la esquina superior izquierda)
+pygame.display.set_caption("JIMMED EXPRESSWAY") # pone el nombre de la ventana creada (esta se muestra en la esquina superior izquierda)
 
-cascade_path = pathlib.Path(cv2.__file__).parent.absolute() / "data/haarcascade_frontalface_default.xml" #Slecciona el archivo xml que reconoce caras.
+cascade_path = pathlib.Path(cv2.__file__).parent.absolute() / "data/haarcascade_frontalface_default.xml" #Selecciona el archivo xml que reconoce caras.
 clf = cv2.CascadeClassifier(str(cascade_path)) #Se define el clasificador
-video_cap = cv2.VideoCapture(0) #La cama a utilizar es la camara por defecto.
+video_cap = cv2.VideoCapture(0) #La camara a utilizar es la camara por defecto. Atributo 0.
 
 
 def draw_window(car, vehicles, lose, displacement):
@@ -73,7 +75,7 @@ def draw_window(car, vehicles, lose, displacement):
 
         displacement += VEL_BACKGROUND # genera el desplazamiento del fondo
         #si el desplazamiento es mas grande el tamaño de cada imagen de la carretera entonces se estan dibujando carreteras fuera 
-        # de la ventana, entonces debe reiniciarse para no dibujar imagenes de carretera fuera de la ventaana
+        # de la ventana, entonces debe reiniciarse para no dibujar imagenes de carretera fuera de la ventana
         if displacement >= BACKGROUND_HEIGHT:
             displacement = 0 
         # dibuja los vehiculos
@@ -81,6 +83,8 @@ def draw_window(car, vehicles, lose, displacement):
             WINDOW.blit(type, (vehicle.x,vehicle.y)) 
 
         WINDOW.blit(CAR,(car.x,car.y)) # dibuja el carro del jugador
+        text = font.render("Score: "+str(score),True,(255,255,255))
+        WINDOW.blit(text,(50,20))
     else:
         # WINDOW.fill(WHITE)
         WINDOW.blit(YOU_LOSE,(0,0)) # dibuja la imagen que se muestra cuando el jugador pierde
@@ -100,6 +104,8 @@ def handle_vehicles(car, vehicles):
     * retorna si hay colision o no
     """
 
+    global score
+
     # itera por la lista de los vehiculos, extrayendo su objeto y tipo
     for vehicle, type in vehicles:
         # verifica si existe una colision del carro del jugador con un vehiculo
@@ -108,10 +114,11 @@ def handle_vehicles(car, vehicles):
             return True
         elif vehicle.y > HEIGHT:
             vehicles.remove((vehicle,type))
+            score+=1
         vehicle.y += VEL_VEHICLES
     return False
 
-def random_car_generator(frame_count):
+def random_car_generator(frame_count,x):
     """
     Funcion que se encarga de generar los vehiculos en posiciones aleatorias
     parametros:
@@ -123,8 +130,13 @@ def random_car_generator(frame_count):
     global VEL_VEHICLE_GENERATION # variavle global que maneja la velocidad con la que se generan los vehiculos
     # si se alcanza la cantidad de frames definida en VEL_VEHICLE_GENERATION se genera un nuevo vehiculo
     if frame_count == VEL_VEHICLE_GENERATION:
-        vehicles.append((pygame.Rect(random.randint(0,WIDTH-CAR_WIDTH),-CAR_HEIGHT,CAR_WIDTH,CAR_HEIGHT), WHITE_CAR)) # genera un
-                                                                                                                      # vehiculo aleatorio
+        up_limit = x+x*0.3
+        down_limit = x-x*0.3
+        if down_limit > 0 and up_limit < WIDTH - CAR_WIDTH:
+            car_x_position = random.randint(int(down_limit),int(up_limit))
+        else:
+            car_x_position = random.randint(0, WIDTH - CAR_WIDTH)
+        vehicles.append((pygame.Rect(car_x_position,-CAR_HEIGHT,CAR_WIDTH,CAR_HEIGHT), WHITE_CAR)) # genera un vehiculo aleatorio 
         return 0 # reinicia la cuenta de los frames
     return frame_count # devuelve la cuenta de los frames
 
@@ -140,6 +152,7 @@ def key_event(car):
         car.x -= VEL
     if keys_pressed[pygame.K_d] and car.x+CAR_WIDTH < WIDTH:
         car.x += VEL
+
 def car_movement(car,x):
      if car.x + CAR_WIDTH < WIDTH and car.x > 0:
         car.x = x
@@ -171,7 +184,7 @@ def main():
         clock.tick(FPS)# define los fps del juego
 
         # se generan obstaculos
-        frame_count = random_car_generator(frame_count)
+        frame_count = random_car_generator(frame_count,car.x)
 
         # verifica si la ventana no se ha cerrado
         run = Is_window_close()
@@ -202,7 +215,7 @@ def main():
             for(x,y,width,height) in faces:
                 cv2.rectangle(video_data,(x,y),(x+width,y+height),(255,0,0),2)
                 car_movement(car,x)
-                print(x,y,width,height)
+                #print(x,y,width,height)
             
             cv2.imshow("video_live face detection",video_data)
 
