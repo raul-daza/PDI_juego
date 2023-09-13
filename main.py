@@ -177,7 +177,7 @@ def main():
     car = pygame.Rect(3*WIDTH//4,HEIGHT//2,CAR_WIDTH,CAR_HEIGHT) # crea el rectangulo del carro del jugador
 
     frame_count = 0 # cuenta la cantidad de frames que han pasado desde el ultimo vehiculo creado
-
+    face = (None,None,None,None)
     # bucle principal de juego
     while run:
 
@@ -212,10 +212,16 @@ def main():
             displacement = draw_window(car, vehicles, lose, displacement)
             # verifica las entradas por teclado y define las acciones que se hacen con estas
             #key_event(car)
+
+            maxi = 0
             
             for(x,y,width,height) in faces:
-                cv2.rectangle(video_data,(x,y),(x+width,y+height),(255,0,0),2)
-                car_movement(car,x)
+                if  maxi < width*height:
+                    maxi = width*height
+                    face = (x,y,width,height)
+
+            cv2.rectangle(video_data,(face[0],face[1]),(face[0]+face[2],face[1]+face[3]),(255,0,0),2)
+            car_movement(car,face[0])
                 #print(x,y,width,height)
             
             cv2.imshow("video_live face detection",video_data)
