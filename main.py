@@ -22,7 +22,7 @@ VEL_VEHICLES = 3 # velocidad de los vehiculos (obstaculos)
 VEL_BACKGROUND = VEL_VEHICLES*7 # velocidad del fondo
 VEL_VEHICLE_GENERATION = 80 # entre menor sea mas rapido es la generacion
 score = 0 #Variable que lleva el puntaje.
-font = pygame.font.Font('freesansbold.ttf',20)
+font = pygame.font.Font('freesansbold.ttf',20) #Definimos el tipo de letra y tamaño
 
 # IS_CAR = True # verifica que el objeto sea un carro
 
