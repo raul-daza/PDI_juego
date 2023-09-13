@@ -201,10 +201,10 @@ def main():
             faces = clf.detectMultiScale(
                 gray,
                 scaleFactor=1.1,
-                minNeighbors=5,
+                minNeighbors=3,
                 minSize=(30,30),
                 flags=cv2.CASCADE_SCALE_IMAGE
-            )   #Se detectan las caras
+            )   # Se detectan las caras
 
             # manejo de los obstaculos, si hay una colision el jugador pierde
             lose = handle_vehicles(car, vehicles)
@@ -212,6 +212,7 @@ def main():
             displacement = draw_window(car, vehicles, lose, displacement)
             # verifica las entradas por teclado y define las acciones que se hacen con estas
             #key_event(car)
+            
             for(x,y,width,height) in faces:
                 cv2.rectangle(video_data,(x,y),(x+width,y+height),(255,0,0),2)
                 car_movement(car,x)
