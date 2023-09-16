@@ -1,9 +1,31 @@
+"""
+--------------------------------------------------------------------------
+------- PLANTILLA DE CÓDIGO ----------------------------------------------
+------- Coceptos básicos de PDI-------------------------------------------
+------- Por: Raul Daza Liñan raul.daza@udea.edu.co -----------------------
+------------ Sebastian Bonilla Cruz sebastian.bonillac@udea.edu.co -------
+------------ Estudiantes de ingenieria electronida UdeA  -----------------
+------- Curso Básico de Procesamiento de Imágenes y Visión Artificial-----
+------- V1 septiembre de 2023 --------------------------------------------
+--------------------------------------------------------------------------
+"""
+"""
+--------------------------------------------------------------------------
+--1. Importe de librerias ------------------------------------------------
+--------------------------------------------------------------------------
+"""
 import pygame
 import os
 import random
 import math
 import pathlib
 import cv2
+
+"""
+--------------------------------------------------------------------------
+--2. creacion de constantes, variables y objetos globales ----------------
+--------------------------------------------------------------------------
+"""
 
 pygame.font.init() # carga los fondos de escritura
 
@@ -21,7 +43,7 @@ VEL = 8 # velocidad del carro
 VEL_VEHICLES = 3 # velocidad de los vehiculos (obstaculos)
 VEL_BACKGROUND = VEL_VEHICLES*7 # velocidad del fondo
 VEL_VEHICLE_GENERATION = 80 # entre menor sea mas rapido es la generacion
-score = 0 #Variable que lleva el puntaje.
+score = 0 # Variable que lleva el puntaje.
 font = pygame.font.Font('freesansbold.ttf',20) #Definimos el tipo de letra y tamaño
 
 # IS_CAR = True # verifica que el objeto sea un carro
@@ -49,10 +71,16 @@ vehicles = [] # guarda los objetos de los vehiculos
 
 pygame.display.set_caption("JIMMED EXPRESSWAY") # pone el nombre de la ventana creada (esta se muestra en la esquina superior izquierda)
 
-cascade_path = pathlib.Path(cv2.__file__).parent.absolute() / "data/haarcascade_frontalface_default.xml" #Selecciona el archivo xml que reconoce caras.
-clf = cv2.CascadeClassifier(str(cascade_path)) #Se define el clasificador
-video_cap = cv2.VideoCapture(0) #La camara a utilizar es la camara por defecto. Atributo 0.
+cascade_path = pathlib.Path(cv2.__file__).parent.absolute() / "data/haarcascade_frontalface_default.xml" # Selecciona el archivo xml que reconoce caras.
+clf = cv2.CascadeClassifier(str(cascade_path)) # Se define el clasificador
+video_cap = cv2.VideoCapture(0) # La camara a utilizar es la camara por defecto. Atributo 0.
 
+"""
+--------------------------------------------------------------------------
+--3. definicion de funciones que realizan las diferentes funcionalidades -
+--   necesarias para el juego --------------------------------------------
+--------------------------------------------------------------------------
+"""
 
 def draw_window(car, vehicles, lose, displacement):
 
@@ -74,24 +102,25 @@ def draw_window(car, vehicles, lose, displacement):
             WINDOW.blit(BACKGROUND, (0,-i*BACKGROUND_HEIGHT+displacement)) 
 
         displacement += VEL_BACKGROUND # genera el desplazamiento del fondo
-        #si el desplazamiento es mas grande el tamaño de cada imagen de la carretera entonces se estan dibujando carreteras fuera 
+
+        # si el desplazamiento es mas grande el tamaño de cada imagen de la carretera entonces se estan dibujando carreteras fuera 
         # de la ventana, entonces debe reiniciarse para no dibujar imagenes de carretera fuera de la ventana
         if displacement >= BACKGROUND_HEIGHT:
-            displacement = 0 
+            displacement = 0
         # dibuja los vehiculos
         for vehicle, type in vehicles:
             WINDOW.blit(type, (vehicle.x,vehicle.y)) 
 
         WINDOW.blit(CAR,(car.x,car.y)) # dibuja el carro del jugador
-        text = font.render("Score: "+str(score),True,(255,255,255))
-        WINDOW.blit(text,(50,20))
+        text = font.render("Score: "+str(score),True,(255,255,255)) # genera el texto en donde se mostrara el marcador
+        WINDOW.blit(text,(50,20)) # dibuja el marcador
     else:
         # WINDOW.fill(WHITE)
         WINDOW.blit(YOU_LOSE,(0,0)) # dibuja la imagen que se muestra cuando el jugador pierde
 
     pygame.display.update() # actualiza los dibujos
 
-    return displacement
+    return displacement # devuelve la cantidad de desplazamiento hecho al fondo
 
     
 def handle_vehicles(car, vehicles):
@@ -104,7 +133,7 @@ def handle_vehicles(car, vehicles):
     * retorna si hay colision o no
     """
 
-    global score
+    global score # variable global que lleva el puntaje
 
     # itera por la lista de los vehiculos, extrayendo su objeto y tipo
     for vehicle, type in vehicles:
@@ -112,11 +141,12 @@ def handle_vehicles(car, vehicles):
         if car.colliderect(vehicle):
             pygame.event.post(pygame.event.Event(HIT)) # genera el evento HIT cuando hay una colision
             return True
+        # verifica si el vehiculo se ha salido se la pantalla
         elif vehicle.y > HEIGHT:
-            vehicles.remove((vehicle,type))
-            score+=1
-        vehicle.y += VEL_VEHICLES
-    return False
+            vehicles.remove((vehicle,type)) # elimina el vehiculo
+            score+=1 # aumenta el marcador
+        vehicle.y += VEL_VEHICLES # actualiza la posicion del vehiculo
+    return False # retorna falso si no hay colision
 
 def random_car_generator(frame_count,x):
     """
@@ -127,13 +157,15 @@ def random_car_generator(frame_count,x):
     * retorna la actualizacion de la variable frame_count
     """
     frame_count += 1 # actualiza la cantidad de frames que han pasado desde la ultima generacion
-    global VEL_VEHICLE_GENERATION # variavle global que maneja la velocidad con la que se generan los vehiculos
+    global VEL_VEHICLE_GENERATION # variable global que maneja la velocidad con la que se generan los vehiculos
     # si se alcanza la cantidad de frames definida en VEL_VEHICLE_GENERATION se genera un nuevo vehiculo
     if frame_count == VEL_VEHICLE_GENERATION:
-        up_limit = x+x*0.3
-        down_limit = x-x*0.3
+        up_limit = x+x*0.3 # define un limite superior
+        down_limit = x-x*0.3 # define un limite inferior
+        # si los limites no sobrepasan la ventana genera aleatoriamente un auto dentro de los limites previamente definidos
         if down_limit > 0 and up_limit < WIDTH - CAR_WIDTH:
             car_x_position = random.randint(int(down_limit),int(up_limit))
+        # si los limites sobrepasan la ventana genera un auto aleatoriamente en cualquier parte del eje x
         else:
             car_x_position = random.randint(0, WIDTH - CAR_WIDTH)
         vehicles.append((pygame.Rect(car_x_position,-CAR_HEIGHT,CAR_WIDTH,CAR_HEIGHT), WHITE_CAR)) # genera un vehiculo aleatorio 
@@ -141,24 +173,49 @@ def random_car_generator(frame_count,x):
     return frame_count # devuelve la cuenta de los frames
 
 def Is_window_close():
+    """
+    Funcion que verifica si el juego se cerro
+    """
+    # recorre los eventos ocurridos
     for event in pygame.event.get():
+            # si uno de los eventos es que se cerro la ventana devuelve 'False'
             if event.type == pygame.QUIT:
                 return  False
+    # si ningnun evento es que se cerro la ventana devuelve 'True'
     return True
 
+# esta funcion queda en desuso al cambiar la modalidad del juego de movimiento con teclado a deteccion de rostro
 def key_event(car):
-    keys_pressed = pygame.key.get_pressed()
+    """
+    Funcion que se encarga de mover el auto cuando se presionen las teclas 'a' (mueve el auto a la izquierda) y 'd' (mueve el carro a la derecha)
+    parametros:
+    * car: el objeto que representa al carro del jugador
+    """
+    keys_pressed = pygame.key.get_pressed() # guarda las teclas presionadas
+    # si la tecla presionada es 'a' mueva el carro a la izquierda, solo si eso no implica que el carro se salga de la pantalla
     if keys_pressed[pygame.K_a] and car.x > 0:
         car.x -= VEL
+    # si la tecla presionada es 'd' mueva el carro a la derecha, solo si eso no implica que el carro se salga de la pantalla
     if keys_pressed[pygame.K_d] and car.x+CAR_WIDTH < WIDTH:
         car.x += VEL
 
 def car_movement(car,x):
-     if car.x + CAR_WIDTH < WIDTH and car.x > 0:
+    """
+    Funcion que se encarga de actualizar la posicion del carro del jugador
+    Parametros:
+    * car: el objeto que representa el carro del jugardor
+    * x: la nueva posicion en el eje x
+    """
+    # actualiza la posicion en 'x' si esto no implica que el auto se salga de la pantalla
+    if car.x + CAR_WIDTH < WIDTH and car.x > 0:
         car.x = x
     
 
-
+"""
+--------------------------------------------------------------------------
+--4. definicion de la funcion principal del juego ------------------------
+--------------------------------------------------------------------------
+"""
 def main():
     """
     Funcion principal del juego
@@ -177,7 +234,7 @@ def main():
     car = pygame.Rect(3*WIDTH//4,HEIGHT//2,CAR_WIDTH,CAR_HEIGHT) # crea el rectangulo del carro del jugador
 
     frame_count = 0 # cuenta la cantidad de frames que han pasado desde el ultimo vehiculo creado
-    face = (None,None,None,None)
+    face = (None,None,None,None) # guarda el rectangulo delimitador de la cara mas cercana
     # bucle principal de juego
     while run:
 
@@ -192,12 +249,12 @@ def main():
         # si no ha perdido, el juego contiuna
         if not lose:
 
-            ret, video_data = video_cap.read() #Leo de la camara.
+            ret, video_data = video_cap.read() #Lee de la camara.
 
             # Flip the video horizontally
             video_data = cv2.flip(video_data, 1)
 
-            gray = cv2.cvtColor(video_data,cv2.COLOR_BGR2GRAY) #Convierto la imagen a escala de grises
+            gray = cv2.cvtColor(video_data,cv2.COLOR_BGR2GRAY) #Convierte la imagen a escala de grises
             faces = clf.detectMultiScale(
                 gray,
                 scaleFactor=1.1,
@@ -213,25 +270,40 @@ def main():
             # verifica las entradas por teclado y define las acciones que se hacen con estas
             #key_event(car)
 
-            maxi = 0
+            maxi = 0 # guarda el area de la cara de mayor tamaño
             
+            # se recorre las caras detectas
             for(x,y,width,height) in faces:
+                # si la cara actual tiene un area mayor a la cara anterior guarda el area de la cara y guarda el rectangulo delimitador de la cara
                 if  maxi < width*height:
-                    maxi = width*height
+                    maxi = width*height 
                     face = (x,y,width,height)
 
-            cv2.rectangle(video_data,(face[0],face[1]),(face[0]+face[2],face[1]+face[3]),(255,0,0),2)
+            cv2.rectangle(video_data,(face[0],face[1]),(face[0]+face[2],face[1]+face[3]),(255,0,0),2) # dibuja el rectangulo delimitador de la cara en el video 
+                                                                                                      # de la camara
+            # mueve el carro a la posicion en donde esta la cara
             car_movement(car,face[0])
                 #print(x,y,width,height)
             
-            cv2.imshow("video_live face detection",video_data)
+            cv2.imshow("video_live face detection",video_data) # muestra el video que se recibe de la camara
 
             # if cv2.waitKey(10) == ord("a"):
             #     break
-    video_cap.release()
-    cv2.destroyAllWindows()
+    video_cap.release() # deja de usar la camara
+    cv2.destroyAllWindows() # cierra las ventanas abiertas por cv2
     pygame.quit() # cierra el juego
 
+"""
+--------------------------------------------------------------------------
+--5. Cuando se ejecute el programa se inicia el juego --------------------
+--------------------------------------------------------------------------
+"""
             
 if __name__ == "__main__":
     main()
+
+"""
+--------------------------------------------------------------------------
+---------------------------  FIN DEL PROGRAMA ----------------------------
+--------------------------------------------------------------------------
+"""
