@@ -77,7 +77,7 @@ video_cap = cv2.VideoCapture(0) # La camara a utilizar es la camara por defecto.
 
 """
 --------------------------------------------------------------------------
---3. definicion de funciones que realizan las diferentes funcionalidades -
+--3. definicion de funciones que realizan las diferentes tareas ---------
 --   necesarias para el juego --------------------------------------------
 --------------------------------------------------------------------------
 """
@@ -238,7 +238,7 @@ def main():
     # bucle principal de juego
     while run:
 
-        clock.tick(FPS)# define los fps del juego
+        clock.tick(FPS) # define los fps del juego
 
         # se generan obstaculos
         frame_count = random_car_generator(frame_count,car.x)
@@ -249,9 +249,9 @@ def main():
         # si no ha perdido, el juego contiuna
         if not lose:
 
-            ret, video_data = video_cap.read() #Lee de la camara.
+            ret, video_data = video_cap.read() # Lee de la camara.
 
-            # Flip the video horizontally
+            # voltea horizontalmente la imagen.
             video_data = cv2.flip(video_data, 1)
 
             gray = cv2.cvtColor(video_data,cv2.COLOR_BGR2GRAY) #Convierte la imagen a escala de grises
